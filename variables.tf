@@ -155,17 +155,16 @@ variable "logging_config" {
 variable "logging_v2_config_s3" {
   description = "The configuration for cloudfront logging v2 to S3"
   type = object({
-    enabled       = optional(bool, false)
-    name          = optional(string, null)
-    arn           = string
-    prefix        = string
-    output_format = optional(string, "json")
+    enabled                       = optional(bool, false)
+    name                          = optional(string, null)
+    arn                           = string
+    prefix                        = optional(string, null)
+    output_format                 = optional(string, "json")
+    output_format_field_delimiter = optional(string, "/t")
   })
   default = {
-    enabled                  = false
-    name                     = null
-    bucket_arn               = null
-    cloudfront_log_group_arn = null
+    enabled = false
+    arn     = null
   }
 
 }
