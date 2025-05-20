@@ -152,6 +152,24 @@ variable "logging_config" {
   default     = {}
 }
 
+variable "logging_v2_config_s3" {
+  description = "The configuration for cloudfront logging v2 to S3"
+  type = object({
+    enabled       = optional(bool, false)
+    name          = optional(string, null)
+    arn           = string
+    prefix        = string
+    output_format = optional(string, "json")
+  })
+  default = {
+    enabled                  = false
+    name                     = null
+    bucket_arn               = null
+    cloudfront_log_group_arn = null
+  }
+
+}
+
 variable "custom_error_response" {
   description = "One or more custom error response elements"
   type        = any
