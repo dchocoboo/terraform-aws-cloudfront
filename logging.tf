@@ -5,6 +5,13 @@
 # }
 
 locals {
+  # Determine which logging destinations are enabled
+  s3_logging_enabled         = var.logging_v2_config_s3.enabled
+  cloudwatch_logging_enabled = var.logging_v2_config_cloudwatch_logs.enabled
+
+  # Create delivery source if any logging is enabled
+  any_logging_enabled = local.s3_logging_enabled || local.cloudwatch_logging_enabled
+
   logging_v2_config_s3_full_arn = var.logging_v2_config_s3.prefix != null ? "${var.logging_v2_config_s3.arn}/${var.logging_v2_config_s3.prefix}" : var.logging_v2_config_s3.arn
 
   # Create a hash of key attributes to force recreation when they change
@@ -22,16 +29,18 @@ locals {
   )
 }
 
-resource "aws_cloudwatch_log_delivery_source" "s3" {
-  count        = var.create_distribution && var.logging_v2_config_s3.enabled ? 1 : 0
-  name         = var.logging_v2_config_s3.name != null ? var.logging_v2_config_s3.name : "cloudfront-${aws_cloudfront_distribution.this[0].id}-s3"
+# Single delivery source for CloudFront access logs
+# This source can feed multiple destinations (S3, CloudWatch Logs, etc.)
+resource "aws_cloudwatch_log_delivery_source" "cloudfront" {
+  count        = var.create_distribution && local.any_logging_enabled ? 1 : 0
+  name         = "cloudfront-${aws_cloudfront_distribution.this[0].id}"
   log_type     = "ACCESS_LOGS"
   resource_arn = aws_cloudfront_distribution.this[0].arn
   tags         = var.tags
 }
 
 resource "aws_cloudwatch_log_delivery_destination" "s3" {
-  count = var.create_distribution && var.logging_v2_config_s3.enabled ? 1 : 0
+  count = var.create_distribution && local.s3_logging_enabled ? 1 : 0
 
   # AWS CloudWatch Log Delivery Destination has API limitations that prevent in-place updates:
   # - ConflictException: "Tags can only be provided when a resource is being created, not updated"
@@ -60,8 +69,8 @@ resource "aws_cloudwatch_log_delivery_destination" "s3" {
 }
 
 resource "aws_cloudwatch_log_delivery" "s3" {
-  count                    = var.create_distribution && var.logging_v2_config_s3.enabled ? 1 : 0
-  delivery_source_name     = aws_cloudwatch_log_delivery_source.s3[0].name
+  count                    = var.create_distribution && local.s3_logging_enabled ? 1 : 0
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.cloudfront[0].name
   delivery_destination_arn = aws_cloudwatch_log_delivery_destination.s3[0].arn
 
   s3_delivery_configuration {
@@ -75,26 +84,17 @@ resource "aws_cloudwatch_log_delivery" "s3" {
 
 # ---------------------------------
 # CloudWatch Log Delivery to CloudWatch Log Group
-# cloudwatch_logs stands for CloudWatch Log Group
 
 resource "aws_cloudwatch_log_group" "cloudwatch_logs" {
-  count             = var.create_distribution && var.logging_v2_config_cloudwatch_logs.enabled ? 1 : 0
+  count             = var.create_distribution && local.cloudwatch_logging_enabled ? 1 : 0
   name              = local.cloudwatch_log_group_name
   retention_in_days = var.logging_v2_config_cloudwatch_logs.retention_in_days
   kms_key_id        = var.logging_v2_config_cloudwatch_logs.kms_key_id
   tags              = var.tags
 }
 
-resource "aws_cloudwatch_log_delivery_source" "cloudwatch_logs" {
-  count        = var.create_distribution && var.logging_v2_config_cloudwatch_logs.enabled ? 1 : 0
-  name         = var.logging_v2_config_cloudwatch_logs.name != null ? var.logging_v2_config_cloudwatch_logs.name : "cloudfront-${aws_cloudfront_distribution.this[0].id}-cloudwatch-logs"
-  log_type     = "ACCESS_LOGS"
-  resource_arn = aws_cloudfront_distribution.this[0].arn
-  tags         = var.tags
-}
-
 resource "aws_cloudwatch_log_delivery_destination" "cloudwatch_logs" {
-  count = var.create_distribution && var.logging_v2_config_cloudwatch_logs.enabled ? 1 : 0
+  count = var.create_distribution && local.cloudwatch_logging_enabled ? 1 : 0
 
   name = var.logging_v2_config_cloudwatch_logs.name != null ? var.logging_v2_config_cloudwatch_logs.name : "cloudfront-${aws_cloudfront_distribution.this[0].id}-cloudwatch-logs"
 
@@ -112,8 +112,8 @@ resource "aws_cloudwatch_log_delivery_destination" "cloudwatch_logs" {
 }
 
 resource "aws_cloudwatch_log_delivery" "cloudwatch_logs" {
-  count                    = var.create_distribution && var.logging_v2_config_cloudwatch_logs.enabled ? 1 : 0
-  delivery_source_name     = aws_cloudwatch_log_delivery_source.cloudwatch_logs[0].name
+  count                    = var.create_distribution && local.cloudwatch_logging_enabled ? 1 : 0
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.cloudfront[0].name
   delivery_destination_arn = aws_cloudwatch_log_delivery_destination.cloudwatch_logs[0].arn
 
   tags = var.tags

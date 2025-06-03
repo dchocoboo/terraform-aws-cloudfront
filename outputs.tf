@@ -88,15 +88,15 @@ output "cloudfront_vpc_origin_ids" {
   value       = local.create_vpc_origin ? [for v in aws_cloudfront_vpc_origin.this : v.id] : []
 }
 
-# CloudWatch Log Delivery S3 outputs
-output "cloudwatch_log_delivery_source_s3_name" {
-  description = "The name of the CloudWatch log delivery source for S3"
-  value       = try(aws_cloudwatch_log_delivery_source.s3[0].name, "")
+# CloudWatch Log Delivery outputs
+output "cloudwatch_log_delivery_source_name" {
+  description = "The name of the CloudWatch log delivery source for CloudFront"
+  value       = try(aws_cloudwatch_log_delivery_source.cloudfront[0].name, "")
 }
 
-output "cloudwatch_log_delivery_source_s3_arn" {
-  description = "The ARN of the CloudWatch log delivery source for S3"
-  value       = try(aws_cloudwatch_log_delivery_source.s3[0].arn, "")
+output "cloudwatch_log_delivery_source_arn" {
+  description = "The ARN of the CloudWatch log delivery source for CloudFront"
+  value       = try(aws_cloudwatch_log_delivery_source.cloudfront[0].arn, "")
 }
 
 output "cloudwatch_log_delivery_destination_s3_name" {
@@ -123,16 +123,6 @@ output "cloudwatch_log_group_cloudwatch_logs_name" {
 output "cloudwatch_log_group_cloudwatch_logs_arn" {
   description = "The ARN of the CloudWatch log group for CloudFront logging"
   value       = try(aws_cloudwatch_log_group.cloudwatch_logs[0].arn, "")
-}
-
-output "cloudwatch_log_delivery_source_cloudwatch_logs_name" {
-  description = "The name of the CloudWatch log delivery source for CloudWatch Log Group"
-  value       = try(aws_cloudwatch_log_delivery_source.cloudwatch_logs[0].name, "")
-}
-
-output "cloudwatch_log_delivery_source_cloudwatch_logs_arn" {
-  description = "The ARN of the CloudWatch log delivery source for CloudWatch Log Group"
-  value       = try(aws_cloudwatch_log_delivery_source.cloudwatch_logs[0].arn, "")
 }
 
 output "cloudwatch_log_delivery_destination_cloudwatch_logs_name" {
