@@ -87,3 +87,29 @@ output "cloudfront_vpc_origin_ids" {
   description = "The IDS of the VPC origin created"
   value       = local.create_vpc_origin ? [for v in aws_cloudfront_vpc_origin.this : v.id] : []
 }
+
+# CloudWatch Log Delivery S3 outputs
+output "cloudwatch_log_delivery_source_s3_name" {
+  description = "The name of the CloudWatch log delivery source for S3"
+  value       = try(aws_cloudwatch_log_delivery_source.s3[0].name, "")
+}
+
+output "cloudwatch_log_delivery_source_s3_arn" {
+  description = "The ARN of the CloudWatch log delivery source for S3"
+  value       = try(aws_cloudwatch_log_delivery_source.s3[0].arn, "")
+}
+
+output "cloudwatch_log_delivery_destination_s3_name" {
+  description = "The name of the CloudWatch log delivery destination for S3"
+  value       = try(aws_cloudwatch_log_delivery_destination.s3[0].name, "")
+}
+
+output "cloudwatch_log_delivery_destination_s3_arn" {
+  description = "The ARN of the CloudWatch log delivery destination for S3"
+  value       = try(aws_cloudwatch_log_delivery_destination.s3[0].arn, "")
+}
+
+output "cloudwatch_log_delivery_s3_id" {
+  description = "The ID of the CloudWatch log delivery for S3"
+  value       = try(aws_cloudwatch_log_delivery.s3[0].id, "")
+}
