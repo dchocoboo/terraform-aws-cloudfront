@@ -36,7 +36,7 @@ resource "aws_cloudwatch_log_delivery" "s3" {
   delivery_destination_arn = aws_cloudwatch_log_delivery_destination.s3[0].arn
 
   s3_delivery_configuration {
-    suffix_path = "/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
+    suffix_path = var.logging_config_s3.suffix_path
   }
 
   field_delimiter = var.logging_v2_config_s3.output_format == "json" ? null : var.logging_v2_config_s3.output_format_field_delimiter

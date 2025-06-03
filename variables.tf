@@ -161,6 +161,7 @@ variable "logging_v2_config_s3" {
     prefix                        = optional(string, null)
     output_format                 = optional(string, "json")
     output_format_field_delimiter = optional(string, "/t")
+    suffix_path                   = optional(string, "/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}")
   })
   default = {
     enabled = false
