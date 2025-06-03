@@ -27,6 +27,15 @@ locals {
     "/aws/cloudfront/${var.tags["Name"]}-${aws_cloudfront_distribution.this[0].id}" :
     "/aws/cloudfront/${aws_cloudfront_distribution.this[0].id}"
   )
+
+  # Create a hash for CloudWatch delivery destination key attributes
+  logging_v2_config_cloudwatch_key_hash = md5(jsonencode({
+    log_group_name    = local.cloudwatch_log_group_name
+    output_format     = var.logging_v2_config_cloudwatch_logs.output_format
+    name_prefix       = var.logging_v2_config_cloudwatch_logs.name
+    retention_in_days = var.logging_v2_config_cloudwatch_logs.retention_in_days
+    kms_key_id        = var.logging_v2_config_cloudwatch_logs.kms_key_id
+  }))
 }
 
 # Single delivery source for CloudFront access logs
@@ -96,7 +105,14 @@ resource "aws_cloudwatch_log_group" "cloudwatch_logs" {
 resource "aws_cloudwatch_log_delivery_destination" "cloudwatch_logs" {
   count = var.create_distribution && local.cloudwatch_logging_enabled ? 1 : 0
 
-  name = var.logging_v2_config_cloudwatch_logs.name != null ? var.logging_v2_config_cloudwatch_logs.name : "cloudfront-${aws_cloudfront_distribution.this[0].id}-cloudwatch-logs"
+  # AWS CloudWatch Log Delivery Destination has API limitations that prevent in-place updates:
+  # - ConflictException: "Tags can only be provided when a resource is being created, not updated"
+  # - Changes to delivery_destination_configuration and output_format also require recreation
+  # 
+  # To work around this, we include a hash of key attributes in the resource name and tags.
+  # When these attributes change, the hash changes, forcing Terraform to recreate the resource
+  # instead of attempting an update that would fail with the AWS API.
+  name = var.logging_v2_config_cloudwatch_logs.name != null ? var.logging_v2_config_cloudwatch_logs.name : "cloudfront-${aws_cloudfront_distribution.this[0].id}-cloudwatch-logs-${substr(local.logging_v2_config_cloudwatch_key_hash, 0, 8)}"
 
   delivery_destination_configuration {
     destination_resource_arn = aws_cloudwatch_log_group.cloudwatch_logs[0].arn
@@ -104,7 +120,11 @@ resource "aws_cloudwatch_log_delivery_destination" "cloudwatch_logs" {
 
   output_format = var.logging_v2_config_cloudwatch_logs.output_format
 
-  tags = var.tags
+  # Include the recreation hash in tags to force recreation when key attributes change
+  # This prevents AWS API errors like: "Tags can only be provided when a resource is being created, not updated"
+  tags = merge(var.tags, {
+    terraform_recreation_hash = local.logging_v2_config_cloudwatch_key_hash
+  })
 
   lifecycle {
     create_before_destroy = true
