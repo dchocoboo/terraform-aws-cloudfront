@@ -13,6 +13,13 @@ locals {
     output_format   = var.logging_v2_config_s3.output_format
     name_prefix     = var.logging_v2_config_s3.name
   }))
+
+  # CloudWatch Log Group name with default pattern
+  cloudwatch_log_group_name = var.logging_v2_config_cloudwatch_logs.log_group_name != null ? var.logging_v2_config_cloudwatch_logs.log_group_name : (
+    lookup(var.tags, "Name", null) != null ?
+    "/aws/cloudfront/${var.tags["Name"]}-${aws_cloudfront_distribution.this[0].id}" :
+    "/aws/cloudfront/${aws_cloudfront_distribution.this[0].id}"
+  )
 }
 
 resource "aws_cloudwatch_log_delivery_source" "s3" {
@@ -72,7 +79,7 @@ resource "aws_cloudwatch_log_delivery" "s3" {
 
 resource "aws_cloudwatch_log_group" "cloudwatch_logs" {
   count             = var.create_distribution && var.logging_v2_config_cloudwatch_logs.enabled ? 1 : 0
-  name              = var.logging_v2_config_cloudwatch_logs.log_group_name
+  name              = local.cloudwatch_log_group_name
   retention_in_days = var.logging_v2_config_cloudwatch_logs.retention_in_days
   kms_key_id        = var.logging_v2_config_cloudwatch_logs.kms_key_id
   tags              = var.tags

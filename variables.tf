@@ -175,7 +175,7 @@ variable "logging_v2_config_cloudwatch_logs" {
   type = object({
     enabled           = optional(bool, false)
     name              = optional(string, null)
-    log_group_name    = string
+    log_group_name    = optional(string, null)
     retention_in_days = optional(number, 365)
     output_format     = optional(string, "json")
     kms_key_id        = optional(string, null)
