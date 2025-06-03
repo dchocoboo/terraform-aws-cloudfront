@@ -66,3 +66,48 @@ resource "aws_cloudwatch_log_delivery" "s3" {
   tags = var.tags
 }
 
+# ---------------------------------
+# CloudWatch Log Delivery to CloudWatch Log Group
+# cloudwatch_logs stands for CloudWatch Log Group
+
+resource "aws_cloudwatch_log_group" "cloudwatch_logs" {
+  count             = var.create_distribution && var.logging_v2_config_cloudwatch_logs.enabled ? 1 : 0
+  name              = var.logging_v2_config_cloudwatch_logs.log_group_name
+  retention_in_days = var.logging_v2_config_cloudwatch_logs.retention_in_days
+  kms_key_id        = var.logging_v2_config_cloudwatch_logs.kms_key_id
+  tags              = var.tags
+}
+
+resource "aws_cloudwatch_log_delivery_source" "cloudwatch_logs" {
+  count        = var.create_distribution && var.logging_v2_config_cloudwatch_logs.enabled ? 1 : 0
+  name         = var.logging_v2_config_cloudwatch_logs.name != null ? var.logging_v2_config_cloudwatch_logs.name : "cloudfront-${aws_cloudfront_distribution.this[0].id}-cloudwatch-logs"
+  log_type     = "ACCESS_LOGS"
+  resource_arn = aws_cloudfront_distribution.this[0].arn
+  tags         = var.tags
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "cloudwatch_logs" {
+  count = var.create_distribution && var.logging_v2_config_cloudwatch_logs.enabled ? 1 : 0
+
+  name = var.logging_v2_config_cloudwatch_logs.name != null ? var.logging_v2_config_cloudwatch_logs.name : "cloudfront-${aws_cloudfront_distribution.this[0].id}-cloudwatch-logs"
+
+  delivery_destination_configuration {
+    destination_resource_arn = aws_cloudwatch_log_group.cloudwatch_logs[0].arn
+  }
+
+  output_format = var.logging_v2_config_cloudwatch_logs.output_format
+
+  tags = var.tags
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_cloudwatch_log_delivery" "cloudwatch_logs" {
+  count                    = var.create_distribution && var.logging_v2_config_cloudwatch_logs.enabled ? 1 : 0
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.cloudwatch_logs[0].name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.cloudwatch_logs[0].arn
+
+  tags = var.tags
+}

@@ -170,6 +170,23 @@ variable "logging_v2_config_s3" {
 
 }
 
+variable "logging_v2_config_cloudwatch_logs" {
+  description = "The configuration for cloudfront logging v2 to CloudWatch Log Group"
+  type = object({
+    enabled           = optional(bool, false)
+    name              = optional(string, null)
+    log_group_name    = string
+    retention_in_days = optional(number, 365)
+    output_format     = optional(string, "json")
+    kms_key_id        = optional(string, null)
+  })
+  default = {
+    enabled        = false
+    log_group_name = null
+  }
+
+}
+
 variable "custom_error_response" {
   description = "One or more custom error response elements"
   type        = any
