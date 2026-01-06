@@ -95,11 +95,12 @@ resource "aws_cloudwatch_log_delivery" "s3" {
 # CloudWatch Log Delivery to CloudWatch Log Group
 
 resource "aws_cloudwatch_log_group" "cloudwatch_logs" {
-  count             = var.create_distribution && local.cloudwatch_logging_enabled ? 1 : 0
-  name              = local.cloudwatch_log_group_name
-  retention_in_days = var.logging_v2_config_cloudwatch_logs.retention_in_days
-  kms_key_id        = var.logging_v2_config_cloudwatch_logs.kms_key_id
-  tags              = var.tags
+  count                       = var.create_distribution && local.cloudwatch_logging_enabled ? 1 : 0
+  name                        = local.cloudwatch_log_group_name
+  retention_in_days           = var.logging_v2_config_cloudwatch_logs.retention_in_days
+  kms_key_id                  = var.logging_v2_config_cloudwatch_logs.kms_key_id
+  deletion_protection_enabled = var.logging_v2_config_cloudwatch_logs.deletion_protection_enabled
+  tags                        = var.tags
 }
 
 resource "aws_cloudwatch_log_delivery_destination" "cloudwatch_logs" {

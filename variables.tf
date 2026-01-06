@@ -173,12 +173,13 @@ variable "logging_v2_config_s3" {
 variable "logging_v2_config_cloudwatch_logs" {
   description = "The configuration for cloudfront logging v2 to CloudWatch Log Group"
   type = object({
-    enabled           = optional(bool, false)
-    name              = optional(string, null)
-    log_group_name    = optional(string, null)
-    retention_in_days = optional(number, 365)
-    output_format     = optional(string, "json")
-    kms_key_id        = optional(string, null)
+    enabled                     = optional(bool, false)
+    name                        = optional(string, null)
+    log_group_name              = optional(string, null)
+    retention_in_days           = optional(number, 365)
+    output_format               = optional(string, "json")
+    kms_key_id                  = optional(string, null)
+    deletion_protection_enabled = optional(bool, null)
   })
   default = {
     enabled        = false
