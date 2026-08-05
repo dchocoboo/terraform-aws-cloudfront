@@ -152,6 +152,42 @@ variable "logging_config" {
   default     = {}
 }
 
+variable "logging_v2_config_s3" {
+  description = "The configuration for cloudfront logging v2 to S3"
+  type = object({
+    enabled                       = optional(bool, false)
+    name                          = optional(string, null)
+    arn                           = string
+    prefix                        = optional(string, null)
+    output_format                 = optional(string, "json")
+    output_format_field_delimiter = optional(string, "/t")
+    suffix_path                   = optional(string, "/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}")
+  })
+  default = {
+    enabled = false
+    arn     = null
+  }
+
+}
+
+variable "logging_v2_config_cloudwatch_logs" {
+  description = "The configuration for cloudfront logging v2 to CloudWatch Log Group"
+  type = object({
+    enabled                     = optional(bool, false)
+    name                        = optional(string, null)
+    log_group_name              = optional(string, null)
+    retention_in_days           = optional(number, 365)
+    output_format               = optional(string, "json")
+    kms_key_id                  = optional(string, null)
+    deletion_protection_enabled = optional(bool, null)
+  })
+  default = {
+    enabled        = false
+    log_group_name = null
+  }
+
+}
+
 variable "custom_error_response" {
   description = "One or more custom error response elements"
   type        = any
